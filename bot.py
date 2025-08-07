@@ -196,6 +196,8 @@ async def average(ctx):
 
     submissions = []
 
+    await ctx.send("Averaging scores...")
+
     for msg_id, chan_id in judged_messages.items():
         
         if ctx.channel.id == average_channels:
