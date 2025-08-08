@@ -6,6 +6,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from datetime import timezone
 import json
+import datetime
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -103,12 +104,33 @@ async def bothelp(ctx):
         f"!set_average_channel: Sets the channel where the !average command can be used. Used to avoid spoliers.\n"
         f"!view_average_channel: Shows the currently set average channel for this server.\n"
         f"!average: Shows average scores for judged messages.\n"
+        f"!uptime: Shows how long the bot has been up in its current session."
         f"!chillwithivan: Chill with Ivan. \n"
         f"!freedom: FREEDOM.\n"
         f"!bunny: Bugs bunny!\n"
         f"!teto: my sins are innumerable and the voices grow louder\n"
         f"!thirsty: thirst"
     )
+
+@bot.command()
+async def uptime(ctx):
+    if bot.launch_time is None:
+        await ctx.send("Bot has just started")
+        return
+
+    now = datetime.datetime.utcnow()
+    delta = now - bot.launch_time
+
+    days, seconds = delta.days, delta.seconds
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    seconds = seconds % 60
+
+    uptime_str = f"{days}d {hours}h {minutes}m {seconds}s"
+    await ctx.send(f"⏱ Uptime: {uptime_str}")
+
+
+
 
 @bot.command()
 async def bunny(ctx):
