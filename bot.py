@@ -4,9 +4,11 @@ from discord import FFmpegPCMAudio
 import asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
-from datetime import timezone
-import json
 import datetime
+from datetime import datetime 
+from datetime import timezone
+from datetime import timedelta
+import json
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -34,6 +36,10 @@ CUTOFF_FILE = "cutoffs.json"
 
 average_channels = {}
 AVERAGE_FILE = "average_channels.json"
+
+bot.launch_time = None
+
+
 
 def save_average_channels():
     with open(AVERAGE_FILE, "w") as c:
@@ -84,7 +90,15 @@ def load_cutoffs():
 
 @bot.event
 async def on_ready():
-    print(f"Bot is online: {bot.user}")
+    global launch_time
+    launch_time = datetime.now()
+    launch_time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"Bot is online! Started at {launch_time}")
+    uptime = 0
+
+    while True:
+        await asyncio.sleep(1)
+        uptime + 1 
 
 @bot.command()
 async def check_channel(ctx):
@@ -114,20 +128,20 @@ async def bothelp(ctx):
 
 @bot.command()
 async def uptime(ctx):
-    if bot.launch_time is None:
-        await ctx.send("Bot has just started")
+    if launch_time is None:
+        await ctx.send("I just started, no uptime yet!")
         return
 
-    now = datetime.datetime.utcnow()
-    delta = now - bot.launch_time
+    now = datetime.now()
+    delta = now - launch_time
 
-    days, seconds = delta.days, delta.seconds
-    hours = seconds // 3600
-    minutes = (seconds % 3600) // 60
-    seconds = seconds % 60
+    days = delta.days
+    hours, remainder = divmod(delta.seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
 
     uptime_str = f"{days}d {hours}h {minutes}m {seconds}s"
     await ctx.send(f"⏱ Uptime: {uptime_str}")
+
 
 
 
