@@ -124,6 +124,10 @@ async def freedom(ctx):
 
 @bot.command()
 async def set_average_channel(ctx):
+    if not ctx.author.guild_permissions.manage_channels:
+        await ctx.send("You do not have the nessecary permissions to set a channel.")
+        return
+
     """Set average channel for this server and save persistently."""
     guild_id = ctx.guild.id
     average_channels[guild_id] = ctx.channel.id
@@ -132,6 +136,9 @@ async def set_average_channel(ctx):
 
 @bot.command()
 async def set_judging_channel(ctx):
+    if not ctx.author.guild_permissions.manage_channels:
+        await ctx.send("You do not have the nessecary permissions to set a channel.")
+        return
     """Set judging channel for this server and save persistently."""
     guild_id = ctx.guild.id
     judging_channels[guild_id] = ctx.channel.id
