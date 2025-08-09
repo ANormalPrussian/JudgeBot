@@ -144,7 +144,9 @@ async def uptime(ctx):
 
 
 
-
+@bot.command()
+async def beans(ctx):
+    await ctx.send("https://tenor.com/view/jmk-gif-22808446")
 
 @bot.command()
 async def bunny(ctx):
