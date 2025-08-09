@@ -145,8 +145,10 @@ async def uptime(ctx):
     await ctx.send(f"⏱ Uptime: {uptime_str}")
 
 @bot.command()
-@commands.has_permissions(ban_members=True)
 async def ban_raiders(ctx):
+    if not ctx.author.guild_permissions.ban_members:
+        await ctx.send("You do not have ban permissions")
+        return
     with open("bans.json", "r") as f:
         ban_list = json.load(f)
 
