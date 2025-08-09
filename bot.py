@@ -333,7 +333,6 @@ async def view_average_channel(ctx):
 async def teto(ctx):
      await ctx.send("https://tenor.com/view/teto-kasane-teto-teto-plush-kasane-teto-plush-crush-it-gif-16166927453889012815")
 
-
 @bot.command()
 async def thirsty(ctx):
     
@@ -370,8 +369,12 @@ async def on_message(message):
         
 
 
-    await bot.process_commands(message) 
+        
+
+
     
+
+    await bot.process_commands(message)
 
 
 # Load persisted data on startup
