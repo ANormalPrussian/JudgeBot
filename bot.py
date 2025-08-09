@@ -143,7 +143,25 @@ async def uptime(ctx):
     uptime_str = f"{days}d {hours}h {minutes}m {seconds}s"
     await ctx.send(f"⏱ Uptime: {uptime_str}")
 
+@bot.command()
+@commands.has_permissions(ban_members=True)
+async def ban_raiders(ctx):
+    with open("bans.json", "r") as f:
+        ban_list = json.load(f)
 
+    for user_id in ban_list:
+        try:
+            user = await ctx.guild.fetch_member(user_id)
+            await ctx.guild.ban(user, reason="Banned from JSON list")
+            await ctx.send(f"🚫 Banned {user} from the server.")
+        except discord.NotFound:
+            # User not in server — ban by ID directly
+            await ctx.guild.ban(discord.Object(id=user_id), reason="Banned from JSON list")
+            await ctx.send(f"🚫 Banned user with ID {user_id} (not in server).")
+        except discord.Forbidden:
+            await ctx.send(f"❌ No permission to ban {user_id}.")
+        except Exception as e:
+            await ctx.send(f"⚠ Error banning {user_id}: {e}")
 
 @bot.command()
 async def beans(ctx):
