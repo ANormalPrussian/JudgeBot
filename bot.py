@@ -369,6 +369,7 @@ async def on_message(message):
         await message.channel.send ("https://tenor.com/view/sonic-gif-4656385985544318455")
         
 
+
     await bot.process_commands(message) 
     
 
