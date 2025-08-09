@@ -118,7 +118,7 @@ async def bothelp(ctx):
         f"!set_average_channel: Sets the channel where the !average command can be used. Used to avoid spoliers.\n"
         f"!view_average_channel: Shows the currently set average channel for this server.\n"
         f"!average: Shows average scores for judged messages.\n"
-        f"!ban_raiders: Bans a list of known raiders from the server. This uses the publicly avaliable list in The Mapping Station"
+        f"!ban_raiders: Bans a list of known raiders from the server. This uses the publicly avaliable list in The Mapping Station\n"
         f"!uptime: Shows how long the bot has been up in its current session.\n"
         f"!chillwithivan: Chill with Ivan. \n"
         f"!freedom: FREEDOM.\n"
