@@ -121,6 +121,7 @@ async def bothelp(ctx):
         f"!uptime: Shows how long the bot has been up in its current session."
         f"!chillwithivan: Chill with Ivan. \n"
         f"!freedom: FREEDOM.\n"
+        f"!beans: beans\n"
         f"!bunny: Bugs bunny!\n"
         f"!teto: my sins are innumerable and the voices grow louder\n"
         f"!thirsty: thirst"
