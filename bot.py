@@ -364,6 +364,11 @@ async def on_message(message):
         await message.channel.send("https://cdn.discordapp.com/attachments/1243324240598663291/1402837043800838144/IMG_3819.png?ex=68955d4e&is=68940bce&hm=e875a49c8e4a3c1177cf7a7f713715187db8c15be9029e04b0a85e268ebbf442&")
         motion_users.remove(user_id)
 
+    if message.content.lower() == "youre gay":
+        await message.channel.send ("So am I.")
+        await message.channel.send ("https://tenor.com/view/sonic-gif-4656385985544318455")
+        
+
     await bot.process_commands(message) 
     
 
