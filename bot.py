@@ -149,7 +149,7 @@ async def ban_raiders(ctx):
     if not ctx.author.guild_permissions.ban_members:
         await ctx.send("You do not have ban permissions")
         return
-    with open("banned_ids.json", "r") as f:
+    with open("bans.json", "r") as f:
         banned_ids = json.load(f)
 
     # Get all banned users as a list
