@@ -152,7 +152,15 @@ async def ban_raiders(ctx):
     with open("bans.json", "r") as f:
         ban_list = json.load(f)
 
+    # Get all currently banned users
+    bans = await ctx.guild.bans()
+    banned_ids = {ban_entry.user.id for ban_entry in bans}
+
     for user_id in ban_list:
+        if user_id in banned_ids:
+            await ctx.send(f"⚠ User ID {user_id} is already banned, skipping.")
+            continue
+
         try:
             user = await ctx.guild.fetch_member(user_id)
             await ctx.guild.ban(user, reason="Banned from JSON list")
