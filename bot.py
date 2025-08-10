@@ -128,6 +128,7 @@ async def bothelp(ctx):
         f"!thirsty: thirst"
     )
 
+
 @bot.command()
 async def uptime(ctx):
     if launch_time is None:
