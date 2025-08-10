@@ -149,30 +149,24 @@ async def ban_raiders(ctx):
     if not ctx.author.guild_permissions.ban_members:
         await ctx.send("You do not have ban permissions")
         return
-    with open("bans.json", "r") as f:
-        ban_list = json.load(f)
+    with open("banned_ids.json", "r") as f:
+        banned_ids = json.load(f)
 
-    # Get all currently banned users
-    bans = await ctx.guild.bans()
-    banned_ids = {ban_entry.user.id for ban_entry in bans}
+    # Get all banned users as a list
+    bans = [entry async for entry in ctx.guild.bans()]
+    already_banned_ids = [ban_entry.user.id for ban_entry in bans]
 
-    for user_id in ban_list:
-        if user_id in banned_ids:
-            await ctx.send(f"⚠ User ID {user_id} is already banned, skipping.")
-            continue
-
-        try:
-            user = await ctx.guild.fetch_member(user_id)
-            await ctx.guild.ban(user, reason="Banned from JSON list")
-            await ctx.send(f"🚫 Banned {user} from the server.")
-        except discord.NotFound:
-            # User not in server — ban by ID directly
-            await ctx.guild.ban(discord.Object(id=user_id), reason="Banned from JSON list")
-            await ctx.send(f"🚫 Banned user with ID {user_id} (not in server).")
-        except discord.Forbidden:
-            await ctx.send(f"❌ No permission to ban {user_id}.")
-        except Exception as e:
-            await ctx.send(f"⚠ Error banning {user_id}: {e}")
+    for user_id in banned_ids:
+        if user_id not in already_banned_ids:
+            try:
+                await ctx.guild.ban(discord.Object(id=user_id), reason="Raid prevention")
+                await ctx.send(f"Banned <@{user_id}>")
+            except discord.Forbidden:
+                await ctx.send(f"❌ I don't have permission to ban <@{user_id}>.")
+            except discord.HTTPException as e:
+                await ctx.send(f"⚠ Failed to ban <@{user_id}>: {e}")
+        else:
+            await ctx.send(f"✅ <@{user_id}> is already banned.")
 
 @bot.command()
 async def beans(ctx):
