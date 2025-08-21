@@ -1,5 +1,6 @@
 import os
 import discord
+from dateutil.parser import isoparse
 from discord import FFmpegPCMAudio
 import asyncio
 from discord.ext import commands
@@ -23,9 +24,8 @@ number_emojis = [
     "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"
 ]
 
-# judged_messages now stores message_id: channel_id
 judged_messages = {}
-
+JUDGED_MESSAGES_FILE = "judged_messages.json"
 # judging channels per guild {guild_id: channel_id}
 judging_channels = {}
 JUDGING_CHANNEL_FILE = "judging_channels.json"
@@ -39,7 +39,19 @@ AVERAGE_FILE = "average_channels.json"
 
 bot.launch_time = None
 
+def load_judged_messages():
+    try:
+        with open(JUDGED_MESSAGES_FILE, "r") as f:
+            data = json.load(f)
+            # convert keys back to int when loading
+            return {int(k): int(v) for k, v in data.items()}
+    except FileNotFoundError:
+        return {}
 
+def save_judged_messages():
+    with open(JUDGED_MESSAGES_FILE, "w") as f:
+        # convert keys to str when saving
+        json.dump({str(k): str(v) for k, v in judged_messages.items()}, f)
 
 def save_average_channels():
     with open(AVERAGE_FILE, "w") as c:
@@ -210,47 +222,78 @@ async def set_judging_channel(ctx):
 
 @bot.command()
 async def start_new_judging(ctx):
-    """Set cutoff timestamp for the current channel (overwrites previous one)."""
+    """Set cutoff timestamp for the current channel and purge old judged messages."""
     channel_id = ctx.channel.id
     timestamp = ctx.message.created_at.replace(tzinfo=timezone.utc).isoformat()
-    # Overwrite the previous cutoff (no need to manually delete it)
+
+    # Save new cutoff
     cutoff_timestamps[str(channel_id)] = timestamp
     save_cutoffs()
-    await ctx.send(f"Cutoff set for #{ctx.channel.name}: {timestamp}")
 
+    # Convert cutoff timestamp to datetime
+    cutoff_dt = isoparse(timestamp)
+
+    # Purge judged messages older than cutoff
+    removed = []
+    for msg_id, chan_id in list(judged_messages.items()):
+        if chan_id == channel_id:
+            try:
+                channel = bot.get_channel(chan_id)
+                if channel is None:
+                    continue
+                message = await channel.fetch_message(int(msg_id))
+            except Exception:
+                # Remove inaccessible messages
+                judged_messages.pop(msg_id, None)
+                removed.append(msg_id)
+                continue
+
+            if message.created_at.replace(tzinfo=timezone.utc) <= cutoff_dt:
+                judged_messages.pop(msg_id, None)
+                removed.append(msg_id)
+
+    save_judged_messages()
+
+    await ctx.send(
+        f"Cutoff set for #{ctx.channel.name}: {timestamp}\n"
+        f"🗑️ Removed {len(removed)} old judged message(s)."
+    )
 
 @bot.command()
 async def judge(ctx):
-    """Add 0-10 reactions and track the message with its channel."""
+    """Add 0-10 reactions and track the message with its channel persistently."""
     message = ctx.message
     for emoji in number_emojis:
         await message.add_reaction(emoji)
-    judged_messages[message.id] = message.channel.id
+
+    judged_messages[str(message.id)] = ctx.channel.id
+    save_judged_messages()
+
+
 
 @bot.command(name="average")
 async def average(ctx):
     """Average scores for judged messages from this server's judging channel, respecting cutoff."""
     emoji_to_value = {emoji: i for i, emoji in enumerate(number_emojis)}
-    
+
     guild_id = ctx.guild.id
     average_channel_id = average_channels.get(guild_id)
 
     if average_channel_id is None:
-        await ctx.send(f"A average channel is not set. Use !set_average_channel to set one.")
+        await ctx.send("An average channel is not set. Use !set_average_channel to set one.")
         return
     
     if ctx.channel.id != average_channel_id:
-        await ctx.send(f"This is not the set average channel.")
+        await ctx.send("This is not the set average channel.")
         return
-    
 
+    # Load judged messages fresh from file
+    judged_messages = load_judged_messages()
     if not judged_messages:
         await ctx.send("No judged messages found yet.")
         return
 
-    guild_id = ctx.guild.id
     judging_channel_id = judging_channels.get(guild_id)
-
     if judging_channel_id is None:
         await ctx.send("Judging channel not set for this server. Use !set_judging_channel in the correct channel.")
         return
@@ -269,9 +312,9 @@ async def average(ctx):
     await ctx.send("Averaging scores...")
 
     for msg_id, chan_id in judged_messages.items():
-        
-        if ctx.channel.id == average_channels:
-            continue
+        # Convert msg_id back to int since JSON keys are strings
+        msg_id = int(msg_id)
+
         # Only messages from the judging channel
         if chan_id != judging_channel_id:
             continue
@@ -301,7 +344,6 @@ async def average(ctx):
             total_weighted += value * count
             total_count += count
 
-
         if total_count == 0:
             avg_result = "No valid reactions"
         else:
@@ -320,6 +362,26 @@ async def average(ctx):
 
     output = "\n".join(submissions)
     await ctx.send(f"Average scores:\n{output}\n\n{cutoff_msg}")
+
+
+
+@bot.event
+async def on_message_delete(message):
+    """Remove deleted messages from judged_messages.json if cached."""
+    msg_id = str(message.id)
+    if msg_id in judged_messages:
+        judged_messages.pop(msg_id, None)
+        save_judged_messages()
+        print(f"Removed deleted judged message {msg_id} from storage (cached).")
+
+@bot.event
+async def on_raw_message_delete(payload):
+    """Remove deleted messages from judged_messages.json if not cached."""
+    msg_id = str(payload.message_id)
+    if msg_id in judged_messages:
+        judged_messages.pop(msg_id, None)
+        save_judged_messages()
+        print(f"Removed deleted judged message {msg_id} from storage (uncached).")
 
 @bot.command()
 async def view_judging_channel(ctx):
@@ -405,5 +467,6 @@ async def on_message(message):
 load_judging_channels()
 load_average_channels()
 load_cutoffs()
+load_judged_messages()
 
 bot.run(TOKEN)
